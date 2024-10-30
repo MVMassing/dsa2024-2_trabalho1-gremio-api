@@ -1,0 +1,90 @@
+[
+  {
+    "id": 1,
+    "nome": "Maquesín",
+    "posicao": "Goleiro",
+    "numero": 1,
+    "idade": 36,
+    "nacionalidade": "Argentino"
+  },
+  {
+    "id": 2,
+    "nome": "Jemerson",
+    "posicao": "Zagueiro",
+    "numero": 28,
+    "idade": 32,
+    "nacionalidade": "Brasileiro"
+  },
+  {
+    "id": 3,
+    "nome": "Rodrigo E",
+    "posicao": "Zagueiro",
+    "numero": 5,
+    "idade": 31,
+    "nacionalidade": "Brasileiro"
+  },
+  {
+    "id": 4,
+    "nome": "João Pedro",
+    "posicao": "Lateral D",
+    "numero": 4,
+    "idade": 28,
+    "nacionalidade": "Brasileiro"
+  },
+  {
+    "id": 5,
+    "nome": "Reinaldo",
+    "posicao": "Lateral E",
+    "numero": 6,
+    "idade": 35,
+    "nacionalidade": "Brasileiro"
+  },
+  {
+    "id": 6,
+    "nome": "Villasanti",
+    "posicao": "Meio campo",
+    "numero": 20,
+    "idade": 27,
+    "nacionalidade": "Paraguaio"
+  },
+  {
+    "id": 7,
+    "nome": "Pepê",
+    "posicao": "Meio campo",
+    "numero": 23,
+    "idade": 26,
+    "nacionalidade": "Brasileiro"
+  },
+  {
+    "id": 8,
+    "nome": "Monsalve",
+    "posicao": "Meio campo",
+    "numero": 11,
+    "idade": 20,
+    "nacionalidade": "Colombiano"
+  },
+  {
+    "id": 9,
+    "nome": "Solteldo",
+    "posicao": "Atacante",
+    "numero": 7,
+    "idade": 27,
+    "nacionalidade": "Venezuelano"
+  },
+  {
+    "id": 10,
+    "nome": "Aravena",
+    "posicao": "Atacante",
+    "numero": 16,
+    "idade": 20,
+    "nacionalidade": "Chileno"
+  },
+  {
+    "id": 11,
+    "nome": "Braithwaite",
+    "posicao": "Atacante",
+    "numero": 22,
+    "idade": 33,
+    "nacionalidade": "Dinamarques"
+  }
+]
