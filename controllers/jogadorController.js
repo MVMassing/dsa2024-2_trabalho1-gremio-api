@@ -2,7 +2,7 @@ const jogadores = require("../data/jogadores.json")
 let currentId = 12
 
 exports.criarJogador = (req, res) => {
-  const { nome, posicao, numero, idade, nacionalidade } = req.body
+  const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body
   const novoJogador = {
     id: currentId++,
     nome,
@@ -10,6 +10,7 @@ exports.criarJogador = (req, res) => {
     numero,
     idade,
     nacionalidade,
+    numGols,
   }
   jogadores.push(novoJogador)
   res.status(201).json(novoJogador)
