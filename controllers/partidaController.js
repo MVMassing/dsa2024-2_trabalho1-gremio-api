@@ -45,18 +45,18 @@ exports.atualizarPartida = (req, res) => {
 }
 
 exports.deletarPartida = (req, res) => {
-  const { id } = req.params
-  const partidaIndex = partidas.findIndex((p) => p.id === parseInt(id))
-  const partida = partidas.find((p) => p.id === parseInt(id))
+  const { id } = req.params;
+  const partidaIndex = partidas.findIndex((p) => p.id === parseInt(id));
+
   if (partidaIndex === -1) {
-    return res.status(404).json({ message: "Partida não encontrada" })
+    return res.status(404).json({ message: "Partida não encontrada" });
   }
-  res.status(200).json({
-    message: `Partida entre Grêmio ${partida.adversario} foi excluída com sucesso`,
-  })
-  partidas.splice(partidaIndex, 1)
-  res.status(204).send()
+  
+  partidas.splice(partidaIndex, 1);
+
+  return res.status(204).send(); 
 }
+
 
 exports.registrarGols = (req, res) => {
   const { id } = req.params
