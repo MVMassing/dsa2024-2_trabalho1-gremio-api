@@ -1,90 +1,127 @@
-const partidas = []
-let currentId = 1
-const jogadores = require("../data/jogadores.json")
+const pool = require('../db');
 
-exports.criarPartida = (req, res) => {
-  const { adversario, data, local } = req.body
-  const novaPartida = {
-    id: currentId++,
-    adversario,
-    data,
-    local,
-    golsGremio: 0,
-    golsAdversario: 0,
-    resultado: null,
-    golsDe: [],
+exports.criarPartida = async (req, res) => {
+  const { adversario, data, local, golsMarcados, golsSofridos } = req.body;
+
+  try {
+    const query = `
+      INSERT INTO partidas (adversario, data, local, gols_marcados, gols_sofridos)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *;
+    `;
+    const values = [adversario, data, local, golsMarcados, golsSofridos];
+    const { rows } = await pool.query(query, values);
+
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  partidas.push(novaPartida)
-  res.status(201).json(novaPartida)
-}
+};
 
-exports.listarPartidas = (req, res) => {
-  res.status(200).json(partidas)
-}
-
-exports.buscarPartidaPorId = (req, res) => {
-  const { id } = req.params
-  const partida = partidas.find((p) => p.id === parseInt(id))
-  if (!partida) {
-    return res.status(404).json({ message: "Partida não encontrada" })
+exports.listarPartidas = async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM partidas');
+    res.status(200).json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  res.status(200).json(partida)
-}
+};
 
-exports.atualizarPartida = (req, res) => {
-  const { id } = req.params
-  const partida = partidas.find((p) => p.id === parseInt(id))
-  if (!partida) {
-    return res.status(404).json({ message: "Partida não encontrada" })
-  }
-  const { adversario, data, local } = req.body
-  partida.adversario = adversario
-  partida.data = data
-  partida.local = local
-  res.status(200).json(partida)
-}
-
-exports.deletarPartida = (req, res) => {
+exports.buscarPartidaPorId = async (req, res) => {
   const { id } = req.params;
-  const partidaIndex = partidas.findIndex((p) => p.id === parseInt(id));
 
-  if (partidaIndex === -1) {
-    return res.status(404).json({ message: "Partida não encontrada" });
+  try {
+    const query = 'SELECT * FROM partidas WHERE id = $1';
+    const { rows } = await pool.query(query, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Partida não encontrada' });
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  
-  partidas.splice(partidaIndex, 1);
+};
 
-  return res.status(204).send(); 
-}
+exports.atualizarPartida = async (req, res) => {
+  const { id } = req.params;
+  const { adversario, data, local, golsMarcados, golsSofridos } = req.body;
 
+  try {
+    const query = `
+      UPDATE partidas
+      SET adversario = $1, data = $2, local = $3, gols_marcados = $4, gols_sofridos = $5
+      WHERE id = $6
+      RETURNING *;
+    `;
+    const values = [adversario, data, local, golsMarcados, golsSofridos, id];
+    const { rows } = await pool.query(query, values);
 
-exports.registrarGols = (req, res) => {
-  const { id } = req.params
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Partida não encontrada' });
+    }
 
-  const partida = partidas.find((p) => p.id === parseInt(id))
-  if (!partida) {
-    return res.status(404).json({ message: "Partida não encontrada" })
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
+};
 
-  const { isGremio, idJogador = null, gols } = req.body
+exports.deletarPartida = async (req, res) => {
+  const { id } = req.params;
 
-  if (isGremio && idJogador == null)
-    return res.json({ message: "Por favor, informe o id do jogador" })
+  try {
+    const query = 'DELETE FROM partidas WHERE id = $1 RETURNING *';
+    const { rows } = await pool.query(query, [id]);
 
-  const jogador = jogadores.find((j) => j.id === parseInt(idJogador))
-  if (isGremio == true && !jogador) {
-    return res.status(404).json({ message: "Jogador não encontrado" })
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Partida não encontrada' });
+    }
+
+    res.status(200).json({ message: 'Partida deletada com sucesso' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
+};
 
-  if (isGremio) {
-    partida.golsGremio += gols
-    for (let i = 0; i < gols; i++) partida.golsDe.push(jogador.nome)
-    jogador.numGols += gols
-  } else {
-    partida.golsAdversario += gols
-    for (let i = 0; i < gols; i++) partida.golsDe.push("Adversário")
+exports.registrarGols = async (req, res) => {
+  const { idJogador, idPartida, gols } = req.body;
+
+  try {
+    // Atualizar gols do jogador
+    const jogadorQuery = `
+      UPDATE jogadores
+      SET num_gols = num_gols + $1
+      WHERE id = $2
+      RETURNING *;
+    `;
+    const jogadorValues = [gols, idJogador];
+    const jogadorResult = await pool.query(jogadorQuery, jogadorValues);
+
+    if (jogadorResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Jogador não encontrado' });
+    }
+
+    // Registrar gols na partida
+    const partidaQuery = `
+      UPDATE partidas
+      SET gols_marcados = gols_marcados + $1
+      WHERE id = $2
+      RETURNING *;
+    `;
+    const partidaValues = [gols, idPartida];
+    const partidaResult = await pool.query(partidaQuery, partidaValues);
+
+    if (partidaResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Partida não encontrada' });
+    }
+
+    res.status(200).json({
+      jogadorAtualizado: jogadorResult.rows[0],
+      partidaAtualizada: partidaResult.rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-
-  partida.resultado = `Grêmio ${partida.golsGremio} - ${partida.golsAdversario} ${partida.adversario}`
-  res.status(200).json(partida)
-}
+};

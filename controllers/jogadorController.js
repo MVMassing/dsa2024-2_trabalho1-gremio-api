@@ -1,55 +1,84 @@
-const jogadores = require("../data/jogadores.json")
-let currentId = 12
+const pool = require("../db");
 
-exports.criarJogador = (req, res) => {
-  const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body
-  const novoJogador = {
-    id: currentId++,
-    nome,
-    posicao,
-    numero,
-    idade,
-    nacionalidade,
-    numGols,
+exports.criarJogador = async (req, res) => {
+  const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body;
+
+  try {
+    const query = `
+      INSERT INTO jogadores (nome, posicao, numero, idade, nacionalidade, num_gols)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *;
+    `;
+    const values = [nome, posicao, numero, idade, nacionalidade, numGols];
+    const { rows } = await pool.query(query, values);
+
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  jogadores.push(novoJogador)
-  res.status(201).json(novoJogador)
-}
+};
 
-exports.listarJogadores = (req, res) => {
-  res.status(200).json(jogadores)
-}
-
-exports.buscarJogadorPorId = (req, res) => {
-  const { id } = req.params
-  const jogador = jogadores.find((j) => j.id === parseInt(id))
-  if (!jogador) {
-    return res.status(404).json({ message: "Jogador não encontrado" })
+exports.listarJogadores = async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM jogadores;");
+    res.status(200).json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  res.status(200).json(jogador)
-}
+};
 
-exports.atualizarJogador = (req, res) => {
-  const { id } = req.params
-  const { nome, posicao, numero, idade, nacionalidade } = req.body
-  const jogador = jogadores.find((j) => j.id === parseInt(id))
-  if (!jogador) {
-    return res.status(404).json({ message: "Jogador não encontrado" })
-  }
-  jogador.nome = nome
-  jogador.posicao = posicao
-  jogador.numero = numero
-  jogador.idade = idade
-  jogador.nacionalidade = nacionalidade
-  res.status(200).json(jogador)
-}
+exports.buscarJogadorPorId = async (req, res) => {
+  const { id } = req.params;
 
-exports.deletarJogador = (req, res) => {
-  const { id } = req.params
-  const index = jogadores.findIndex((j) => j.id === parseInt(id))
-  if (index === -1) {
-    return res.status(404).json({ message: "Jogador não encontrado" })
+  try {
+    const { rows } = await pool.query("SELECT * FROM jogadores WHERE id = $1;", [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Jogador não encontrado" });
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  jogadores.splice(index, 1)
-  res.status(204).send()
-}
+};
+
+exports.atualizarJogador = async (req, res) => {
+  const { id } = req.params;
+  const { nome, posicao, numero, idade, nacionalidade } = req.body;
+
+  try {
+    const query = `
+      UPDATE jogadores
+      SET nome = $1, posicao = $2, numero = $3, idade = $4, nacionalidade = $5
+      WHERE id = $6
+      RETURNING *;
+    `;
+    const values = [nome, posicao, numero, idade, nacionalidade, id];
+    const { rows } = await pool.query(query, values);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Jogador não encontrado" });
+    }
+
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.deletarJogador = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const query = "DELETE FROM jogadores WHERE id = $1 RETURNING *;";
+    const { rows } = await pool.query(query, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Jogador não encontrado" });
+    }
+
+    res.status(200).json({ message: "Jogador deletado com sucesso", jogador: rows[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
