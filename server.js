@@ -2,15 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const jogadorRoutes = require('./routes/jogadorRoutes');
 const partidaRoutes = require('./routes/partidaRoutes');
-const pool = require('./db'); // Importa o pool de db.js
+const pool = require('./db');
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Rotas
 app.use('/api/jogadores', jogadorRoutes);
 app.use('/api/partidas', partidaRoutes);
 
@@ -52,7 +50,6 @@ const criarTabelas = async () => {
   }
 };
 
-// Chama a criação das tabelas
 criarTabelas();
 
 app.use((req, res) => {
