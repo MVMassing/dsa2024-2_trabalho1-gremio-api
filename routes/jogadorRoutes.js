@@ -20,7 +20,7 @@ router.post('/populate', async (req, res) => {
   
       for (const jogador of jogadores) {
         const query = `
-          INSERT INTO jogadores (id, nome, posicao, numero, idade, nacionalidade, num_gols)
+          INSERT INTO jogadores (id, nome, posicao, numero, idade, nacionalidade, numgols)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
           ON CONFLICT (id) DO NOTHING; -- Evita duplicatas
         `;

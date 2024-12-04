@@ -5,7 +5,7 @@ exports.criarJogador = async (req, res) => {
 
   try {
     const query = `
-      INSERT INTO jogadores (nome, posicao, numero, idade, nacionalidade, num_gols)
+      INSERT INTO jogadores (nome, posicao, numero, idade, nacionalidade, numgols)
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *;
     `;
