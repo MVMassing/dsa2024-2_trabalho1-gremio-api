@@ -5,6 +5,7 @@ const partidaRoutes = require('./routes/partidaRoutes');
 const pool = require('./db');
 
 const app = express();
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -22,7 +23,7 @@ const criarTabelas = async () => {
   const queryJogadores = `
     CREATE TABLE IF NOT EXISTS jogadores (
       id SERIAL PRIMARY KEY,
-      nome VARCHAR(100) NOT NULL,
+      nome VdARCHAR(100) NOT NULL,
       posicao VARCHAR(50) NOT NULL,
       numero INTEGER NOT NULL,
       idade INTEGER NOT NULL,
