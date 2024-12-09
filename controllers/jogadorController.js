@@ -1,4 +1,4 @@
-const pool = require("../db");
+const pool = require('../server');
 
 exports.criarJogador = async (req, res) => {
   const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body;

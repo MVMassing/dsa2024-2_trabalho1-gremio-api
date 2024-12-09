@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const pool = require('../db');
+const pool = require('../server');
 const jogadorController = require('../controllers/jogadorController');
 const router = express.Router();
 

@@ -1,11 +1,19 @@
+const { Pool } = require('pg');
 const express = require('express');
 const cors = require('cors');
 const jogadorRoutes = require('./routes/jogadorRoutes');
 const partidaRoutes = require('./routes/partidaRoutes');
-const pool = require('./db');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+const pool = new Pool({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'gremio_api',
+  password: 'postgres',
+  port: 5432,
+});
 
 app.use(cors());
 app.use(express.json());
@@ -23,7 +31,7 @@ const criarTabelas = async () => {
   const queryJogadores = `
     CREATE TABLE IF NOT EXISTS jogadores (
       id SERIAL PRIMARY KEY,
-      nome VdARCHAR(100) NOT NULL,
+      nome VARCHAR(100) NOT NULL,
       posicao VARCHAR(50) NOT NULL,
       numero INTEGER NOT NULL,
       idade INTEGER NOT NULL,
@@ -61,3 +69,5 @@ app.use((req, res) => {
 app.listen(port, () => {
 console.log(`Servidor rodando em http://localhost:${port}`);
 });
+
+module.exports = pool;
