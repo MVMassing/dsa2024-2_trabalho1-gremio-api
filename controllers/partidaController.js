@@ -92,7 +92,7 @@ exports.registrarGols = async (req, res) => {
     // Atualizar gols do jogador
     const jogadorQuery = `
       UPDATE jogadores
-      SET numgols = numgols + $1
+      SET numGols = numGols + $1
       WHERE id = $2
       RETURNING *;
     `;

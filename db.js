@@ -1,5 +1,4 @@
 const postgres = require("./postgres/postgres.json")
-
 const { Pool } = require("pg")
 
 const pool = new Pool({

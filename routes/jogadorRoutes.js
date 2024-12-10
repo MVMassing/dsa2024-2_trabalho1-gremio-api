@@ -1,7 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const pool = require('../server');
+const pool = require('../db');
 const jogadorController = require('../controllers/jogadorController');
 const router = express.Router();
 
@@ -20,7 +20,7 @@ router.post('/populate', async (req, res) => {
   
       for (const jogador of jogadores) {
         const query = `
-          INSERT INTO jogadores (id, nome, posicao, numero, idade, nacionalidade, numgols)
+          INSERT INTO jogadores (id, nome, posicao, numero, idade, nacionalidade, numGols)
           VALUES ($1, $2, $3, $4, $5, $6, $7)
           ON CONFLICT (id) DO NOTHING; -- Evita duplicatas
         `;

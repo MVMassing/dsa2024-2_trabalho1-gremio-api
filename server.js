@@ -44,10 +44,12 @@ const criarTabelas = async () => {
 
   try {
     await pool.query(queryJogadores);
+    console.log("Tabela 'jogadores' criada com sucesso!");
     await pool.query(queryPartidas);
-    console.log('Tabelas criadas com sucesso!');
+    console.log("Tabela 'partidas' criada com sucesso!");
   } catch (error) {
-    console.error('Erro ao criar tabelas:', error);
+    console.error('Erro ao criar tabelas:', error.message);
+    console.error('Detalhes:', error);
   }
 };
 

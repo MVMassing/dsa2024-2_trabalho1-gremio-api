@@ -1,24 +1,31 @@
 const pool = require("../db")
 
 exports.criarJogador = async (req, res) => {
-  let id = await getPlayersLength(req, res)
-  const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body
+  const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body;
+
+  if (!nome || !posicao || !numero || !idade || !nacionalidade) {
+    return res.status(400).json({ error: "Todos os campos são obrigatórios." });
+  }
 
   try {
-    const query = `
-      INSERT INTO jogadores (id, nome, posicao, numero, idade, nacionalidade, numgols)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING *;
-    `
-    const values = [id++ ,nome, posicao, numero, idade, nacionalidade, numGols]
-    const { rows } = await pool.query(query, values)
+    // Verifica se o número já existe
+    const verificaNumeroQuery = `SELECT * FROM jogadores WHERE numero = $1;`;
+    const verificaNumero = await pool.query(verificaNumeroQuery, [numero]);
 
-    res.status(201).json(rows[0])
-  } catch (error) {
-    //TESTE ERRO
-    if (error.code === '23505') { 
-      return res.status(400).json({ error: 'Jogador já existe.' });
+    if (verificaNumero.rows.length > 0) {
+      return res.status(400).json({ error: "O número informado já está sendo usado por outro jogador." });
     }
+
+    const insertQuery = `
+      INSERT INTO jogadores (nome, posicao, numero, idade, nacionalidade, numGols)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *;
+    `;
+    const values = [nome, posicao, numero, idade, nacionalidade, numGols];
+    const { rows } = await pool.query(insertQuery, values);
+
+    res.status(201).json(rows[0]);
+  } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
@@ -82,18 +89,9 @@ exports.deletarJogador = async (req, res) => {
       return res.status(404).json({ message: "Jogador não encontrado" });
     }
 
-    res.status(200).json({ message: "Jogador deletado com sucesso", jogador: rows[0] });
+//    res.status(200).json({ message: "Jogador deletado com sucesso", jogador: rows[0] });
+      res.status(204).send();  // Retornar 204 No Content para sucesso na deleção
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
-const getPlayersLength = async (req, res) => {
-  try {
-    const { rows } = await pool.query("SELECT MAX(id) FROM jogadores;")
-    const getMaxId = rows[0].max
-    return getMaxId
-  } catch (error) {
-    res.status(500).json({ error: error.message })
-  }
-}
