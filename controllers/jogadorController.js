@@ -1,18 +1,19 @@
-const pool = require('../server');
+const pool = require("../db")
 
 exports.criarJogador = async (req, res) => {
-  const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body;
+  let id = await getPlayersLength(req, res)
+  const { nome, posicao, numero, idade, nacionalidade, numGols = 0 } = req.body
 
   try {
     const query = `
-      INSERT INTO jogadores (nome, posicao, numero, idade, nacionalidade, numgols)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO jogadores (id, nome, posicao, numero, idade, nacionalidade, numgols)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *;
-    `;
-    const values = [nome, posicao, numero, idade, nacionalidade, numGols];
-    const { rows } = await pool.query(query, values);
+    `
+    const values = [id++ ,nome, posicao, numero, idade, nacionalidade, numGols]
+    const { rows } = await pool.query(query, values)
 
-    res.status(201).json(rows[0]);
+    res.status(201).json(rows[0])
   } catch (error) {
     //TESTE ERRO
     if (error.code === '23505') { 
@@ -86,3 +87,13 @@ exports.deletarJogador = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+const getPlayersLength = async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT MAX(id) FROM jogadores;")
+    const getMaxId = rows[0].max
+    return getMaxId
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}

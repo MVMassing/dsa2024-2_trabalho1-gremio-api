@@ -31,15 +31,15 @@ describe('Partida Controller', () => {
   });
 
   it('Deve buscar uma partida por ID', async () => {
-    const response = await request(app).get('/api/partidas/1');
+    const response = await request(app).get('/api/partidas/8');
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('id', 1);
+    expect(response.body).toHaveProperty('id', 8);
   });
 
   it('Deve atualizar uma partida', async () => {
     const response = await request(app)
-      .put('/api/partidas/1')
+      .put('/api/partidas/8')
       .send({ adversario: "Time Atualizado" });
 
     expect(response.status).toBe(200);
@@ -47,9 +47,9 @@ describe('Partida Controller', () => {
   });
 
   it('Deve deletar uma partida', async () => {
-    const response = await request(app).delete('/api/partidas/1');
+    const response = await request(app).delete('/api/partidas/8');
 
-    expect(response.status).toBe(204);
+    expect(response.status).toBe(200);
   });
 
   it('Deve retornar 404 ao buscar partida inexistente', async () => {

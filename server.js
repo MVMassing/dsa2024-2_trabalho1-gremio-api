@@ -1,19 +1,11 @@
-const { Pool } = require('pg');
 const express = require('express');
 const cors = require('cors');
 const jogadorRoutes = require('./routes/jogadorRoutes');
 const partidaRoutes = require('./routes/partidaRoutes');
+const pool = require("./db")
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'gremio_api',
-  password: 'postgres',
-  port: 5432,
-});
 
 app.use(cors());
 app.use(express.json());
