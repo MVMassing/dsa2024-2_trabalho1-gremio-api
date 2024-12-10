@@ -52,15 +52,15 @@ exports.atualizarPartida = async (req, res) => {
   const valores = [];
 
   if (adversario) {
-    campos.push("adversario = $1");
+    campos.push("adversario = $");
     valores.push(adversario);
   }
   if (data) {
-    campos.push("data = $2");
+    campos.push("data = $");
     valores.push(data);
   }
   if (local) {
-    campos.push("local = $3");
+    campos.push("local = $");
     valores.push(local);
   }
 
@@ -70,9 +70,11 @@ exports.atualizarPartida = async (req, res) => {
 
   valores.push(id);
 
+  const camposQuery = campos.map((campo, index) => `${campo}${index + 1}`).join(", ")
+
   const query = `
     UPDATE partidas
-    SET ${campos.join(", ")}
+    SET ${camposQuery}
     WHERE id = $${valores.length}
     RETURNING *;
   `;
