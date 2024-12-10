@@ -46,20 +46,42 @@ exports.buscarPartidaPorId = async (req, res) => {
 
 exports.atualizarPartida = async (req, res) => {
   const { id } = req.params;
-  const { adversario, data, local, golsMarcados, golsSofridos } = req.body;
+  const { adversario, data, local } = req.body;
+
+  const campos = [];
+  const valores = [];
+
+  if (adversario) {
+    campos.push("adversario = $1");
+    valores.push(adversario);
+  }
+  if (data) {
+    campos.push("data = $2");
+    valores.push(data);
+  }
+  if (local) {
+    campos.push("local = $3");
+    valores.push(local);
+  }
+
+  if (campos.length === 0) {
+    return res.status(400).json({ message: "Nenhum campo para atualização fornecido." });
+  }
+
+  valores.push(id);
+
+  const query = `
+    UPDATE partidas
+    SET ${campos.join(", ")}
+    WHERE id = $${valores.length}
+    RETURNING *;
+  `;
 
   try {
-    const query = `
-      UPDATE partidas
-      SET adversario = $1, data = $2, local = $3, gols_marcados = $4, gols_sofridos = $5
-      WHERE id = $6
-      RETURNING *;
-    `;
-    const values = [adversario, data, local, golsMarcados, golsSofridos, id];
-    const { rows } = await pool.query(query, values);
+    const { rows } = await pool.query(query, valores);
 
     if (rows.length === 0) {
-      return res.status(404).json({ error: 'Partida não encontrada' });
+      return res.status(404).json({ error: "Partida não encontrada" });
     }
 
     res.status(200).json(rows[0]);
@@ -89,7 +111,7 @@ exports.registrarGols = async (req, res) => {
   const { idJogador, gols, golsSofridos } = req.body;
   const { id } = req.params; // A partida ID vem pela URL, não pelo corpo
 
-  const client = await pool.connect();  // Inicia uma conexão com o banco de dados
+  const client = await pool.connect();
 
   try {
     // Inicia a transação
