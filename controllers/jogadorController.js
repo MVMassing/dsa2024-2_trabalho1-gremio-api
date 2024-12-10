@@ -55,18 +55,50 @@ exports.buscarJogadorPorId = async (req, res) => {
 };
 
 exports.atualizarJogador = async (req, res) => {
-  const { id } = req.params;
-  const { nome, posicao, numero, idade, nacionalidade } = req.body;
+  const { id } = req.params; // ID do jogador via URL
+  const { nome, posicao, numero, idade, nacionalidade } = req.body; // Obtendo os campos a serem atualizados
+
+  // Construção dinâmica da query
+  const campos = [];
+  const valores = [];
+
+  if (nome) {
+    campos.push("nome = $1");
+    valores.push(nome);
+  }
+  if (posicao) {
+    campos.push("posicao = $2");
+    valores.push(posicao);
+  }
+  if (numero) {
+    campos.push("numero = $3");
+    valores.push(numero);
+  }
+  if (idade) {
+    campos.push("idade = $4");
+    valores.push(idade);
+  }
+  if (nacionalidade) {
+    campos.push("nacionalidade = $5");
+    valores.push(nacionalidade);
+  }
+
+  if (campos.length === 0) {
+    return res.status(400).json({ message: "Nenhum campo para atualização fornecido." });
+  }
+
+  valores.push(id);
+
+  // Cria a query de atualização com os campos dinâmicos
+  const query = `
+    UPDATE jogadores
+    SET ${campos.join(", ")}
+    WHERE id = $${valores.length}
+    RETURNING *;
+  `;
 
   try {
-    const query = `
-      UPDATE jogadores
-      SET nome = $1, posicao = $2, numero = $3, idade = $4, nacionalidade = $5
-      WHERE id = $6
-      RETURNING *;
-    `;
-    const values = [nome, posicao, numero, idade, nacionalidade, id];
-    const { rows } = await pool.query(query, values);
+    const { rows } = await pool.query(query, valores);
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "Jogador não encontrado" });
