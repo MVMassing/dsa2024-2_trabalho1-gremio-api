@@ -1,7 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 const jogadorRoutes = require('../routes/jogadorRoutes');
-const pool = require('../db'); // Conexão com o banco de dados
+const pool = require('../db');
 
 const app = express();
 app.use(express.json());

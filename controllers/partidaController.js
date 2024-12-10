@@ -108,7 +108,7 @@ exports.deletarPartida = async (req, res) => {
 };
 
 exports.registrarGols = async (req, res) => {
-  const { idJogador, gols, golsSofridos } = req.body;
+  const { idJogador, gols, golsSofridos } = req.body; // golsSofridos pode ser informado isoladamente
   const { id } = req.params; // A partida ID vem pela URL, não pelo corpo
 
   const client = await pool.connect();
@@ -117,23 +117,31 @@ exports.registrarGols = async (req, res) => {
     // Inicia a transação
     await client.query('BEGIN');
 
-    // Atualizar gols do jogador
-    const jogadorQuery = `
-      UPDATE jogadores
-      SET numGols = numGols + $1
-      WHERE id = $2
-      RETURNING *;
-    `;
-    const jogadorValues = [gols, idJogador];
-    const jogadorResult = await client.query(jogadorQuery, jogadorValues);
-
-    if (jogadorResult.rows.length === 0) {
-      await client.query('ROLLBACK');  // Se não encontrar o jogador, faz o rollback da transação
-      return res.status(404).json({ error: 'Jogador não encontrado' });
+    // Verificar se foi informado apenas idJogador ou apenas gols
+    if ((idJogador && gols === undefined) || (gols !== undefined && !idJogador)) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Se for declarar gols, deve informar o idJogador, e vice-versa.' });
     }
 
-    // Define gols_sofridos com valor 0 se não for informado e se não houver valor maior que 0 já registrado
-    const partidaQuery = 'SELECT gols_sofridos FROM partidas WHERE id = $1';
+    // Se o idJogador for fornecido, atualizar os gols do jogador
+    if (idJogador && gols !== undefined) {
+      const jogadorQuery = `
+        UPDATE jogadores
+        SET numGols = numGols + $1
+        WHERE id = $2
+        RETURNING *;
+      `;
+      const jogadorValues = [gols, idJogador];
+      const jogadorResult = await client.query(jogadorQuery, jogadorValues);
+
+      if (jogadorResult.rows.length === 0) {
+        await client.query('ROLLBACK');  // Se não encontrar o jogador, faz o rollback da transação
+        return res.status(404).json({ error: 'Jogador não encontrado' });
+      }
+    }
+
+    // Verificar se a partida existe
+    const partidaQuery = 'SELECT gols_marcados, gols_sofridos FROM partidas WHERE id = $1';
     const partidaResult = await client.query(partidaQuery, [id]);
 
     if (partidaResult.rows.length === 0) {
@@ -141,23 +149,21 @@ exports.registrarGols = async (req, res) => {
       return res.status(404).json({ error: 'Partida não encontrada' });
     }
 
+    // Atualizar os gols sofridos, se informado
     let golsSofridosFinal = golsSofridos;
 
-    // Se gols_sofridos não foi fornecido, mas já existem gols sofridos maiores que 0 na partida, mantem esse valor
-    if (golsSofridos === undefined && partidaResult.rows[0].gols_sofridos > 0) {
+    if (golsSofridos === undefined) {
       golsSofridosFinal = partidaResult.rows[0].gols_sofridos;
-    } else if (golsSofridos === undefined) {
-      golsSofridosFinal = 0;  // Se não foi informado e não havia gols sofridos antes, define como 0
     }
 
-    // Atualizar gols na partida
+    // Atualizar a partida com os gols sofridos
     const updatePartidaQuery = `
       UPDATE partidas
-      SET gols_marcados = COALESCE(gols_marcados, 0) + $1, gols_sofridos = $2
-      WHERE id = $3
+      SET gols_sofridos = $1
+      WHERE id = $2
       RETURNING *;
     `;
-    const partidaValues = [gols, golsSofridosFinal, id];
+    const partidaValues = [golsSofridosFinal, id];
     const updatePartidaResult = await client.query(updatePartidaQuery, partidaValues);
 
     if (updatePartidaResult.rows.length === 0) {
@@ -165,11 +171,22 @@ exports.registrarGols = async (req, res) => {
       return res.status(404).json({ error: 'Partida não encontrada' });
     }
 
+    // Se foram fornecidos gols e idJogador, também atualizar os gols marcados na partida
+    if (gols !== undefined && idJogador) {
+      const updateGolsMarcadosQuery = `
+        UPDATE partidas
+        SET gols_marcados = COALESCE(gols_marcados, 0) + $1
+        WHERE id = $2
+        RETURNING *;
+      `;
+      const golsMarcadosValues = [gols, id];
+      await client.query(updateGolsMarcadosQuery, golsMarcadosValues);
+    }
+
     // Se todas as operações foram bem-sucedidas, faz o commit da transação
     await client.query('COMMIT');
 
     res.status(200).json({
-      jogadorAtualizado: jogadorResult.rows[0],
       partidaAtualizada: updatePartidaResult.rows[0],
     });
   } catch (error) {
@@ -179,4 +196,3 @@ exports.registrarGols = async (req, res) => {
     client.release(); 
   }
 };
-
